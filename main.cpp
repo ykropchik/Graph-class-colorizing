@@ -5,18 +5,29 @@ int main() {
 
     Graph graph = Graph();
 
-    graph.addEdge(1, 4);
-    graph.addEdge(1, 6);
-    graph.addEdge(4, 2);
-    graph.addEdge(4, 6);
-    graph.addEdge(5, 6);
-    graph.addEdge(2, 5);
-    graph.addEdge(2, 3);
-    graph.addEdge(3, 5);
-    graph.addEdge(3, 6);
-    graph.traversing();
-    std::cout << std::endl;
+//    graph.addEdge(1, 4);
+//    graph.addEdge(1, 6);
+//    graph.addEdge(4, 2);
+//    graph.addEdge(4, 6);
+//    graph.addEdge(5, 6);
+//    graph.addEdge(2, 5);
+//    graph.addEdge(2, 3);
+//    graph.addEdge(3, 5);
+//    graph.addEdge(3, 6);
+//    graph.traversing();
+//    std::cout << std::endl;
+
+    graph.printGraph();
+
+    for (int i = 1; i < 10; i++) {
+        for (int j = 1; j < 10; j++) {
+            graph.addEdge(i, j);
+        }
+    }
+
     graph.colorizeGraph();
+    graph.printGraph();
+    graph.traversing();
 
     /*graph.addEdge(1, 2);
     graph.addEdge(1, 5);

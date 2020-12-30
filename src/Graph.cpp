@@ -117,9 +117,9 @@ int GraphNode::getMinColor() {
         adjacencyRunner = adjacencyRunner->next;
     }
 
-    bool* busyColors = new bool[adjacencyCount];
+    bool* busyColors = new bool[adjacencyCount + 1];
 
-    for(int i = 0; i < adjacencyCount; i++) {
+    for(int i = 0; i < adjacencyCount + 1; i++) {
         busyColors[i] = false;
     }
 
@@ -133,7 +133,7 @@ int GraphNode::getMinColor() {
         adjacencyRunner = adjacencyRunner->next;
     }
 
-    for (int i = 0; i < adjacencyCount; ++i) {
+    for (int i = 0; i < adjacencyCount + 1; ++i) {
         if (!busyColors[i]) {
             delete[] busyColors;
             return (i + 1);
@@ -502,10 +502,10 @@ void Graph::colorizeGraph() {
     colorizeNodes(this->nodeAdjacencyList);
     int colorCount = this->getColorCount();
 
-    while (this->getColorCount() + 1 != colorCount && this->nodeAdjacencyList->color != colorCount - 1) {
+    while (this->getColorCount() >= colorCount && this->nodeAdjacencyList->color + 1 != colorCount) {
         GraphNode* minNodeWithMaxColor = getMinNodeWithColor(colorCount);
-        printGraph();
-        std::cout << std::endl;
+//        printGraph();
+//        std::cout << std::endl;
         reColorizeAdjacency(minNodeWithMaxColor, colorCount);
     }
 }
