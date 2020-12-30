@@ -2,8 +2,26 @@
 // Created by YKROPCHIK on 06.12.2020.
 //
 
+enum NodeMark {
+    NODE_NOT_MARKED,
+    NODE_MARKED_NOT_PASSED,
+    NODE_PASSED
+};
+
+enum EdgeMark {
+    EDGE_PASSED,
+    EDGE_NOT_PASSED
+};
+
 struct GraphNode;
 struct AdjacencyListNode;
+
+struct NodeQueue {
+    GraphNode* node;
+    NodeQueue* nextNode;
+
+    void addNode(GraphNode* node);
+};
 
 struct GraphNode {
     int color;
@@ -11,18 +29,23 @@ struct GraphNode {
     AdjacencyListNode* adjacencyList;
     GraphNode* prevNode;
     GraphNode* nextNode;
+    NodeMark mark;
+
 
     GraphNode(int nodeNumber);
     GraphNode(int nodeNumber, GraphNode* prevNode, GraphNode* nextNode);
     void addAdjacentNode(GraphNode* node);
-    AdjacencyListNode* searchAdjacent(int nodeNumber);
     void removeAdjacentNode(AdjacencyListNode* adjacentNode);
+    AdjacencyListNode* searchAdjacent(int nodeNumber);
+    int getMinColor();
+    bool checkColor(int color);
 };
 
 struct AdjacencyListNode {
+    GraphNode* node;
     AdjacencyListNode* prev;
     AdjacencyListNode* next;
-    GraphNode* node;
+    EdgeMark mark;
 
     AdjacencyListNode(GraphNode* node);
     AdjacencyListNode(GraphNode* node, AdjacencyListNode* prev, AdjacencyListNode* next);
@@ -31,9 +54,11 @@ struct AdjacencyListNode {
 class Graph {
 private:
     GraphNode* nodeAdjacencyList;
-    int chromaticNumber;
 
-    void resetChromaticNumb();
+    int getColorCount();
+    void colorizeNodes(GraphNode* node);
+    void reColorizeAdjacency(GraphNode* node, unsigned int colorCount);
+    GraphNode* getMinNodeWithColor(int color);
 
 public:
     Graph();
@@ -47,5 +72,5 @@ public:
     bool searchEdge(int nodeNumberFirst, int nodeNumberSecond);
     void printGraph();
     void colorizeGraph();
-    int getChromaticNumber();
+    void traversing();
 };

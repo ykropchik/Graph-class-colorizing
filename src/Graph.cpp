@@ -6,12 +6,23 @@
 #include <iostream>
 #include "Graph.h"
 
+void NodeQueue::addNode(GraphNode *node) {
+    NodeQueue* runner = this;
+
+    while (runner->nextNode != nullptr) {
+        runner = runner->nextNode;
+    }
+
+    runner->nextNode = new NodeQueue{node};
+}
+
 GraphNode::GraphNode(int nodeNumber) {
     this->nodeNumber = nodeNumber;
     this->color = -1;
     this->adjacencyList = nullptr;
     this->prevNode = nullptr;
     this->nextNode = nullptr;
+    this->mark = NODE_NOT_MARKED;
 }
 
 GraphNode::GraphNode(int nodeNumber, GraphNode* prevNode, GraphNode* nextNode) {
@@ -20,6 +31,7 @@ GraphNode::GraphNode(int nodeNumber, GraphNode* prevNode, GraphNode* nextNode) {
     this->adjacencyList = nullptr;
     this->prevNode = prevNode;
     this->nextNode = nextNode;
+    this->mark = NODE_NOT_MARKED;
 }
 
 void GraphNode::addAdjacentNode(GraphNode *node) {
@@ -30,34 +42,22 @@ void GraphNode::addAdjacentNode(GraphNode *node) {
 
     AdjacencyListNode* runner = this->adjacencyList;
 
-    if (runner->next == nullptr && node != runner->node) {
-        runner->next = new AdjacencyListNode(node, runner, nullptr);
+    if (runner->node->nodeNumber > node->nodeNumber) {
+        this->adjacencyList = new AdjacencyListNode(node, nullptr, runner);
         return;
     }
 
     while (runner->next != nullptr) {
-        runner = runner->next;
-    }
-
-    runner->next = new AdjacencyListNode(node, runner, nullptr);
-}
-
-AdjacencyListNode* GraphNode::searchAdjacent(int searchNodeNumber) {
-    if (adjacencyList == nullptr) {
-        return nullptr;
-    }
-
-    AdjacencyListNode* runner = adjacencyList;
-
-    while (runner != nullptr) {
-        if (runner->node->nodeNumber == searchNodeNumber) {
-            return runner;
+        if (runner->next->node->nodeNumber > node->nodeNumber) {
+            runner->next = new AdjacencyListNode(node, runner, runner->next);
+            runner->next->next->prev = runner->next;
+            return;
         }
 
         runner = runner->next;
     }
 
-    return nullptr;
+    runner->next = new AdjacencyListNode(node, runner, nullptr);
 }
 
 void GraphNode::removeAdjacentNode(AdjacencyListNode* adjacentNode) {
@@ -85,21 +85,99 @@ void GraphNode::removeAdjacentNode(AdjacencyListNode* adjacentNode) {
     delete adjacentNode;
 }
 
+AdjacencyListNode* GraphNode::searchAdjacent(int searchNodeNumber) {
+    if (adjacencyList == nullptr) {
+        return nullptr;
+    }
+
+    AdjacencyListNode* runner = adjacencyList;
+
+    while (runner != nullptr) {
+        if (runner->node->nodeNumber == searchNodeNumber) {
+            return runner;
+        }
+
+        runner = runner->next;
+    }
+
+    return nullptr;
+}
+
+int GraphNode::getMinColor() {
+    if (this->adjacencyList == nullptr) {
+        return 1;
+    }
+
+    AdjacencyListNode* adjacencyRunner = this->adjacencyList;
+
+    int adjacencyCount = 0;
+
+    while (adjacencyRunner != nullptr) {
+        adjacencyCount++;
+        adjacencyRunner = adjacencyRunner->next;
+    }
+
+    bool* busyColors = new bool[adjacencyCount];
+
+    for(int i = 0; i < adjacencyCount; i++) {
+        busyColors[i] = false;
+    }
+
+    adjacencyRunner = this->adjacencyList;
+
+    while (adjacencyRunner != nullptr) {
+        if (adjacencyRunner->node->color != -1) {
+           busyColors[adjacencyRunner->node->color - 1] = true;
+        }
+
+        adjacencyRunner = adjacencyRunner->next;
+    }
+
+    for (int i = 0; i < adjacencyCount; ++i) {
+        if (!busyColors[i]) {
+            delete[] busyColors;
+            return (i + 1);
+        }
+    }
+
+    delete[] busyColors;
+    return adjacencyCount;
+}
+
+bool GraphNode::checkColor(int checkColor) {
+    if (this->adjacencyList == nullptr) {
+        return true;
+    }
+
+    AdjacencyListNode* runner = this->adjacencyList;
+
+    while (runner != nullptr) {
+        if (runner->node->color == checkColor && runner->node->nodeNumber < this->nodeNumber) {
+            return false;
+        }
+
+        runner = runner->next;
+    }
+
+    return true;
+}
+
 AdjacencyListNode::AdjacencyListNode(GraphNode *node) {
     this->node = node;
     this->prev = nullptr;
     this->next = nullptr;
+    this->mark = EDGE_NOT_PASSED;
 }
 
 AdjacencyListNode::AdjacencyListNode(GraphNode* node, AdjacencyListNode* prev, AdjacencyListNode* next) {
     this->node = node;
     this->prev = prev;
     this->next = next;
+    this->mark = EDGE_NOT_PASSED;
 }
 
 Graph::Graph() {
     this->nodeAdjacencyList = nullptr;
-    chromaticNumber = 0;
 }
 
 Graph::~Graph() {
@@ -107,7 +185,11 @@ Graph::~Graph() {
         return;
     }
 
-    GraphNode* runner = nodeAdjacencyList;
+    while (this->nodeAdjacencyList != nullptr) {
+        this->removeNode(this->nodeAdjacencyList->nodeNumber);
+    }
+
+    /*GraphNode* runner = nodeAdjacencyList;
 
     while (runner->nextNode != nullptr) {
         runner = runner->nextNode;
@@ -115,29 +197,100 @@ Graph::~Graph() {
 
     while (runner->prevNode != nullptr) {
         runner = runner->prevNode;
-        delete runner->nextNode;
+        this->removeNode(runner->nextNode->nodeNumber);
     }
 
     nodeAdjacencyList = nullptr;
-    delete runner;
+    delete runner;*/
 }
 
-void Graph::resetChromaticNumb() {
-    this->chromaticNumber = -1;
+int Graph::getColorCount() {
+    GraphNode* runner = this->nodeAdjacencyList;
+    int colorCount = 0;
+
+    while (runner != nullptr) {
+        if (runner->color > colorCount) {
+            colorCount = runner->color;
+        }
+
+        runner = runner->nextNode;
+    }
+
+    return colorCount;
+}
+
+void Graph::colorizeNodes(GraphNode* node) {
+
+    if (node == nullptr) {
+        return;
+    }
+
+    GraphNode* runner = node->nextNode;
+
+    while (runner != nullptr) {
+        runner->color = runner->getMinColor();
+        runner = runner->nextNode;
+    }
+
+
+}
+
+void Graph::reColorizeAdjacency(GraphNode* node, unsigned int colorCount) {
+
+    if (node->prevNode == nullptr && node->color + 1 == colorCount) {
+        return;
+    }
+
+    if (node->color + 1 >= colorCount || !node->checkColor(node->color + 1)) {
+        node->color = -1;
+
+        AdjacencyListNode* runner = node->adjacencyList;
+
+        while (runner->next != nullptr) {
+            runner = runner->next;
+        }
+
+        while (runner->node->color == -1) {
+            runner = runner->prev;
+        }
+
+        reColorizeAdjacency(runner->node, colorCount);
+    } else {
+        node->color++;
+        colorizeNodes(node);
+    }
+}
+
+GraphNode* Graph::getMinNodeWithColor(int color) {
+    GraphNode* runner = this->nodeAdjacencyList;
+
+    while (runner->nextNode != nullptr) {
+        runner = runner->nextNode;
+    }
+
+    GraphNode* maxNode = runner;
+
+    while (runner != nullptr) {
+        if (runner->color == color && runner->nodeNumber < maxNode->nodeNumber) {
+            maxNode = runner;
+        }
+
+        runner = runner->prevNode;
+    }
+
+    return maxNode;
 }
 
 bool Graph::addNode(int nodeNumber) {
     if (nodeAdjacencyList == nullptr) {
         nodeAdjacencyList = new GraphNode(nodeNumber);
-        resetChromaticNumb();
         return true;
     }
 
     GraphNode* runner = nodeAdjacencyList;
 
-    if (runner->nextNode == nullptr && nodeNumber < runner->nodeNumber) {
+    if (nodeNumber < runner->nodeNumber) {
         nodeAdjacencyList = new GraphNode(nodeNumber, nullptr, runner);
-        resetChromaticNumb();
         return true;
     }
 
@@ -149,7 +302,6 @@ bool Graph::addNode(int nodeNumber) {
         if (nodeNumber < runner->nextNode->nodeNumber) {
             runner->nextNode = new GraphNode(nodeNumber, runner, runner->nextNode);
             runner->nextNode->nextNode->prevNode = runner->nextNode;
-            resetChromaticNumb();
             return true;
         }
 
@@ -158,7 +310,6 @@ bool Graph::addNode(int nodeNumber) {
 
     if (runner->nodeNumber != nodeNumber) {
         runner->nextNode = new GraphNode(nodeNumber, runner, nullptr);
-        resetChromaticNumb();
         return true;
     }
 
@@ -166,6 +317,10 @@ bool Graph::addNode(int nodeNumber) {
 }
 
 bool Graph::addEdge(int nodeNumberFirst, int nodeNumberSecond) {
+    if (nodeNumberFirst == nodeNumberSecond) {
+        return false;
+    }
+
     if (searchEdge(nodeNumberFirst, nodeNumberSecond)) {
         return false;
     }
@@ -184,7 +339,6 @@ bool Graph::addEdge(int nodeNumberFirst, int nodeNumberSecond) {
     firstNode->addAdjacentNode(secondNode);
     secondNode->addAdjacentNode(firstNode);
 
-    resetChromaticNumb();
     return true;
 }
 
@@ -211,8 +365,15 @@ bool Graph::removeNode(int nodeNumber) {
 
     if (node != nullptr) {
         if (node->adjacencyList == nullptr) {
-            node->prevNode->nextNode = node->nextNode;
-            node->nextNode->prevNode = node->prevNode;
+            if (node->prevNode != nullptr) {
+                node->prevNode->nextNode = node->nextNode;
+                this->nodeAdjacencyList = node->nextNode;
+            }
+
+            if (node->nextNode != nullptr) {
+                node->nextNode->prevNode = node->prevNode;
+            }
+
             delete node;
             return true;
         }
@@ -316,10 +477,111 @@ void Graph::printGraph() {
     }
 }
 
+/*unsigned int Graph::getNodeCount() {
+    if (nodeAdjacencyList == nullptr) {
+        return 0;
+    }
+
+    GraphNode* runner = nodeAdjacencyList;
+    unsigned int counter = 0;
+
+    while(runner != nullptr) {
+        counter++;
+        runner = runner->nextNode;
+    }
+
+    return counter;
+}*/
+
 void Graph::colorizeGraph() {
+    if (nodeAdjacencyList == nullptr) {
+        return;
+    }
 
+    this->nodeAdjacencyList->color = 1;
+    colorizeNodes(this->nodeAdjacencyList);
+    int colorCount = this->getColorCount();
+
+    while (this->getColorCount() + 1 != colorCount && this->nodeAdjacencyList->color != colorCount - 1) {
+        GraphNode* minNodeWithMaxColor = getMinNodeWithColor(colorCount);
+        printGraph();
+        std::cout << std::endl;
+        reColorizeAdjacency(minNodeWithMaxColor, colorCount);
+    }
 }
 
-int Graph::getChromaticNumber() {
-    return this->chromaticNumber;
+void Graph::traversing() {
+    if (this->nodeAdjacencyList == nullptr || this->nodeAdjacencyList->adjacencyList == nullptr) {
+        return;
+    }
+
+    auto* queue = new NodeQueue{this->nodeAdjacencyList};
+    NodeQueue* queueRunner = queue;
+    AdjacencyListNode* runner;
+    GraphNode* edgeEnd;
+    this->nodeAdjacencyList->mark = NODE_MARKED_NOT_PASSED;
+
+    /*while (queueRunner != nullptr) {
+        runner = queueRunner->node->adjacencyList;
+        while (runner != nullptr) {
+            runner->mark = EDGE_PASSED;
+            edgeEnd = runner->node;
+
+            if (edgeEnd->mark == NODE_NOT_MARKED) {
+                edgeEnd->mark = NODE_MARKED_NOT_PASSED;
+                std::cout << queueRunner->node->nodeNumber << " --- " << edgeEnd->nodeNumber << std::endl;
+                queue->addNode(edgeEnd);
+            }
+
+            runner = runner->next;
+        }
+
+        queueRunner->node->mark = NODE_PASSED;
+        queueRunner = queueRunner->nextNode;
+    }*/
+
+    while (queueRunner != nullptr) {
+        runner = queueRunner->node->adjacencyList;
+        while (runner != nullptr) {
+            runner->mark = EDGE_PASSED;
+            edgeEnd = runner->node;
+
+            if (edgeEnd->mark == NODE_NOT_MARKED) {
+                edgeEnd->mark = NODE_MARKED_NOT_PASSED;
+                queue->addNode(edgeEnd);
+            }
+
+            if (edgeEnd->mark != NODE_PASSED) {
+                std::cout << queueRunner->node->nodeNumber << " --- " << edgeEnd->nodeNumber << std::endl;
+            }
+
+            runner = runner->next;
+        }
+
+        queueRunner->node->mark = NODE_PASSED;
+        queueRunner = queueRunner->nextNode;
+    }
+
+    /*while (queueRunner != nullptr) {
+        runner = queueRunner->node->adjacencyList;
+        while (runner != nullptr) {
+            edgeEnd = runner->node;
+
+            if (edgeEnd->mark == NODE_NOT_MARKED) {
+                edgeEnd->mark = NODE_MARKED_NOT_PASSED;
+                queue->addNode(edgeEnd);
+            }
+
+            if (runner->mark == EDGE_NOT_PASSED && edgeEnd->mark != NODE_PASSED) {
+                std::cout << queueRunner->node->nodeNumber << " --- " << edgeEnd->nodeNumber << std::endl;
+            }
+
+            runner->mark = EDGE_PASSED;
+            runner = runner->next;
+        }
+
+        queueRunner->node->mark = NODE_PASSED;
+        queueRunner = queueRunner->nextNode;
+    }*/
 }
+
