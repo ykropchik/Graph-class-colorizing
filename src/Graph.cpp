@@ -44,6 +44,7 @@ void GraphNode::addAdjacentNode(GraphNode *node) {
 
     if (runner->node->nodeNumber > node->nodeNumber) {
         this->adjacencyList = new AdjacencyListNode(node, nullptr, runner);
+        runner->prev = this->adjacencyList;
         return;
     }
 
@@ -238,23 +239,26 @@ void Graph::colorizeNodes(GraphNode* node) {
 void Graph::reColorizeAdjacency(GraphNode* node, unsigned int colorCount) {
 
     if (node->prevNode == nullptr && node->color + 1 == colorCount) {
+        colorizeNodes(node->nextNode);
         return;
     }
 
     if (node->color + 1 >= colorCount || !node->checkColor(node->color + 1)) {
-        node->color = -1;
+        if (node->adjacencyList != nullptr) {
+            node->color = -1;
 
-        AdjacencyListNode* runner = node->adjacencyList;
+            AdjacencyListNode* runner = node->adjacencyList;
 
-        while (runner->next != nullptr) {
-            runner = runner->next;
+            while (runner->next != nullptr) {
+                runner = runner->next;
+            }
+
+            while (runner->node->color == -1) {
+                runner = runner->prev;
+            }
+
+            reColorizeAdjacency(runner->node, colorCount);
         }
-
-        while (runner->node->color == -1) {
-            runner = runner->prev;
-        }
-
-        reColorizeAdjacency(runner->node, colorCount);
     } else {
         node->color++;
         colorizeNodes(node);

@@ -17,47 +17,66 @@ int main() {
 //    graph.traversing();
 //    std::cout << std::endl;
 
-    graph.printGraph();
+//    graph.printGraph();
+//
+//    for (int i = 1; i < 10; i++) {
+//        for (int j = 1; j < 10; j+=2) {
+//            graph.addEdge(i, j);
+//        }
+//    }
+//
+//   //graph.printGraph();
+//
+//    for (int i = 1; i < 10; i+=2) {
+//        graph.removeNode(i);
+//    }
+//
+//    graph.colorizeGraph();
+//    graph.printGraph();
+//    graph.traversing();
 
-    for (int i = 1; i < 10; i++) {
-        for (int j = 1; j < 10; j++) {
-            graph.addEdge(i, j);
-        }
-    }
-
-    graph.colorizeGraph();
-    graph.printGraph();
-    graph.traversing();
-
-    /*graph.addEdge(1, 2);
-    graph.addEdge(1, 5);
-    graph.addEdge(1, 6);
-    graph.addEdge(2, 3);
-    graph.addEdge(2, 7);
-    graph.addEdge(3, 4);
-    graph.addEdge(3, 8);
-    graph.addEdge(4, 5);
-    graph.addEdge(4, 9);
-    graph.addEdge(5, 10);
-    graph.addEdge(6, 8);
-    graph.addEdge(6, 9);
-    graph.addEdge(7, 9);
-    graph.addEdge(7, 10);
-    graph.addEdge(8, 10);
-    graph.colorizeGraph();*/
-
-    /*for (int i = 1; i < 10; i++) {
-        graph.addEdge(i, i*2 + 1);
-    }
-
-    graph.printGraph();
+    /** ----- Первый граф ----- **/
+    Graph graph1 = Graph();
+    graph1.addEdge(1, 3);
+    graph1.addEdge(3, 4);
+    graph1.addEdge(4, 2);
+    graph1.addEdge(2, 7);
+    graph1.addEdge(7, 6);
+    graph1.addEdge(6, 5);
+    graph1.addEdge(5, 8);
+    graph1.addEdge(8, 1);
+    graph1.colorizeGraph();
+    graph1.printGraph();
     std::cout << std::endl;
 
-    for (int i = 1; i < 8; i++) {
-        graph.removeNode(i);
-    }
+    /** ----- Второй граф ----- **/
+    Graph graph2 = Graph();
+    graph2.addEdge(1, 6);
+    graph2.addEdge(1, 4);
+    graph2.addEdge(6, 4);
+    graph2.addEdge(6, 5);
+    graph2.addEdge(6, 3);
+    graph2.addEdge(4, 2);
+    graph2.addEdge(2, 3);
+    graph2.addEdge(2, 5);
+    graph2.addEdge(5, 3);
+    graph2.colorizeGraph();
+    graph2.printGraph();
+    std::cout << std::endl;
 
-    graph.printGraph();*/
+    /** ----- Третий граф ----- **/
+    Graph graph3 = Graph();
+    graph3.addEdge(1, 4);
+    graph3.addEdge(1, 5);
+    graph3.addEdge(4, 6);
+    graph3.addEdge(4, 3);
+    graph3.addEdge(5, 2);
+    graph3.addEdge(5, 3);
+    graph3.addEdge(6, 3);
+    graph3.addEdge(2, 3);
+    graph3.colorizeGraph();
+    graph3.printGraph();
+    std::cout << std::endl;
 
     return 0;
 }
