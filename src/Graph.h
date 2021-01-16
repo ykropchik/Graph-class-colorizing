@@ -37,8 +37,7 @@ struct GraphNode {
     void addAdjacentNode(GraphNode* node);
     void removeAdjacentNode(AdjacencyListNode* adjacentNode);
     AdjacencyListNode* searchAdjacent(int nodeNumber);
-    int getMinColor();
-    bool checkColor(int color);
+    int getMinColor(int color = -1);
 };
 
 struct AdjacencyListNode {
@@ -54,10 +53,13 @@ struct AdjacencyListNode {
 class Graph {
 private:
     GraphNode* nodeAdjacencyList;
+    int colorCount;
 
     int getColorCount();
+    void recolorizeNode(GraphNode* node);
+    void colorizeNode(GraphNode* node);
     void colorizeNodes(GraphNode* node);
-    void reColorizeAdjacency(GraphNode* node, unsigned int colorCount);
+    void recolorizeAdjacency(GraphNode* node);
     GraphNode* getMinNodeWithColor(int color);
 
 public:

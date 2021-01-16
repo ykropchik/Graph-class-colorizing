@@ -104,24 +104,38 @@ AdjacencyListNode* GraphNode::searchAdjacent(int searchNodeNumber) {
     return nullptr;
 }
 
-int GraphNode::getMinColor() {
+int GraphNode::getMinColor(int minColor) {
+    int startColor = 0;
+
     if (this->adjacencyList == nullptr) {
         return 1;
     }
 
     AdjacencyListNode* adjacencyRunner = this->adjacencyList;
 
-    int adjacencyCount = 0;
+    int maxColor = this->color;
 
     while (adjacencyRunner != nullptr) {
-        adjacencyCount++;
+        if (adjacencyRunner->node->color > maxColor) {
+            maxColor = adjacencyRunner->node->color;
+        }
+
         adjacencyRunner = adjacencyRunner->next;
     }
 
-    bool* busyColors = new bool[adjacencyCount + 1];
+    if (maxColor == -1) {
+        return 1;
+    }
 
-    for(int i = 0; i < adjacencyCount + 1; i++) {
+    bool busyColors[maxColor + 1];
+
+    for(int i = 0; i < maxColor + 1; i++) {
         busyColors[i] = false;
+    }
+
+    if (minColor != -1) {
+        busyColors[minColor - 1] = true;
+        startColor = minColor;
     }
 
     adjacencyRunner = this->adjacencyList;
@@ -134,33 +148,13 @@ int GraphNode::getMinColor() {
         adjacencyRunner = adjacencyRunner->next;
     }
 
-    for (int i = 0; i < adjacencyCount + 1; ++i) {
+    for (int i = startColor; i < maxColor + 1; ++i) {
         if (!busyColors[i]) {
-            delete[] busyColors;
             return (i + 1);
         }
     }
 
-    delete[] busyColors;
-    return adjacencyCount;
-}
-
-bool GraphNode::checkColor(int checkColor) {
-    if (this->adjacencyList == nullptr) {
-        return true;
-    }
-
-    AdjacencyListNode* runner = this->adjacencyList;
-
-    while (runner != nullptr) {
-        if (runner->node->color == checkColor && runner->node->nodeNumber < this->nodeNumber) {
-            return false;
-        }
-
-        runner = runner->next;
-    }
-
-    return true;
+    return maxColor + 1;
 }
 
 AdjacencyListNode::AdjacencyListNode(GraphNode *node) {
@@ -179,6 +173,7 @@ AdjacencyListNode::AdjacencyListNode(GraphNode* node, AdjacencyListNode* prev, A
 
 Graph::Graph() {
     this->nodeAdjacencyList = nullptr;
+    this->colorCount = 0;
 }
 
 Graph::~Graph() {
@@ -190,34 +185,51 @@ Graph::~Graph() {
         this->removeNode(this->nodeAdjacencyList->nodeNumber);
     }
 
-    /*GraphNode* runner = nodeAdjacencyList;
-
-    while (runner->nextNode != nullptr) {
-        runner = runner->nextNode;
-    }
-
-    while (runner->prevNode != nullptr) {
-        runner = runner->prevNode;
-        this->removeNode(runner->nextNode->nodeNumber);
-    }
-
-    nodeAdjacencyList = nullptr;
-    delete runner;*/
 }
 
 int Graph::getColorCount() {
     GraphNode* runner = this->nodeAdjacencyList;
-    int colorCount = 0;
+    int temp = 0;
 
     while (runner != nullptr) {
-        if (runner->color > colorCount) {
-            colorCount = runner->color;
+        if (runner->color > temp) {
+            temp = runner->color;
         }
 
         runner = runner->nextNode;
     }
 
-    return colorCount;
+    return temp;
+}
+
+void Graph::recolorizeNode(GraphNode* node) {
+    int minColor = node->getMinColor(node->color);
+
+    if (minColor < colorCount) {
+        node->color = minColor;
+        //colorizeNodes(node->nextNode);
+    } else {
+        node->color = -1;
+        recolorizeAdjacency(node);
+        colorizeNode(node);
+    }
+}
+
+void Graph::colorizeNode(GraphNode* node) {
+//    std::cout << std::endl;
+//    this->printGraph();
+
+    if (colorCount == 0) {
+        node->color = node->getMinColor();
+    } else {
+        if (node->getMinColor() < colorCount) {
+            node->color = node->getMinColor();
+        } else {
+            node->color = -1;
+            recolorizeAdjacency(node);
+            colorizeNode(node);
+        }
+    }
 }
 
 void Graph::colorizeNodes(GraphNode* node) {
@@ -226,43 +238,34 @@ void Graph::colorizeNodes(GraphNode* node) {
         return;
     }
 
-    GraphNode* runner = node->nextNode;
+    GraphNode* runner = node;
 
     while (runner != nullptr) {
-        runner->color = runner->getMinColor();
+        colorizeNode(runner);
         runner = runner->nextNode;
     }
-
-
 }
 
-void Graph::reColorizeAdjacency(GraphNode* node, unsigned int colorCount) {
+void Graph::recolorizeAdjacency(GraphNode* node) {
+//    std::cout << std::endl;
+//    this->printGraph();
 
-    if (node->prevNode == nullptr && node->color + 1 == colorCount) {
-        colorizeNodes(node->nextNode);
+    AdjacencyListNode* runner = node->adjacencyList;
+
+    while (runner->next != nullptr) {
+        runner = runner->next;
+    }
+
+    while (runner != nullptr && runner->node->color == -1) {
+        runner = runner->prev;
+    }
+
+    if (runner == nullptr) {
+        recolorizeNode(node);
         return;
     }
 
-    if (node->color + 1 >= colorCount || !node->checkColor(node->color + 1)) {
-        if (node->adjacencyList != nullptr) {
-            node->color = -1;
-
-            AdjacencyListNode* runner = node->adjacencyList;
-
-            while (runner->next != nullptr) {
-                runner = runner->next;
-            }
-
-            while (runner->node->color == -1) {
-                runner = runner->prev;
-            }
-
-            reColorizeAdjacency(runner->node, colorCount);
-        }
-    } else {
-        node->color++;
-        colorizeNodes(node);
-    }
+    recolorizeNode(runner->node);
 }
 
 GraphNode* Graph::getMinNodeWithColor(int color) {
@@ -502,16 +505,24 @@ void Graph::colorizeGraph() {
         return;
     }
 
-    this->nodeAdjacencyList->color = 1;
     colorizeNodes(this->nodeAdjacencyList);
-    int colorCount = this->getColorCount();
+    this->colorCount = this->getColorCount();
 
-    while (this->getColorCount() >= colorCount && this->nodeAdjacencyList->color + 1 != colorCount) {
-        GraphNode* minNodeWithMaxColor = getMinNodeWithColor(colorCount);
-//        printGraph();
-//        std::cout << std::endl;
-        reColorizeAdjacency(minNodeWithMaxColor, colorCount);
+//    while (nodeAdjacencyList->getMinColor() != colorCount - 1) {
+    while (this->getColorCount() >= this->colorCount) {
+
+        GraphNode* node = getMinNodeWithColor(colorCount);
+        recolorizeNode(node);
+
+//        this->printGraph();
+//
+//        int tempColorCount = this->getColorCount();
+//        if (tempColorCount < this->colorCount) {
+//            this->colorCount = tempColorCount;
+//        }
     }
+
+    this->colorCount = this->getColorCount();
 }
 
 void Graph::traversing() {
