@@ -252,6 +252,10 @@ void Graph::recolorizeAdjacency(GraphNode* node) {
 
     AdjacencyListNode* runner = node->adjacencyList;
 
+    if (runner == nullptr) {
+        return;
+    }
+
     while (runner->next != nullptr) {
         runner = runner->next;
     }
@@ -371,42 +375,43 @@ bool Graph::removeNode(int nodeNumber) {
     GraphNode* node = searchNode(nodeNumber);
 
     if (node != nullptr) {
-        if (node->adjacencyList == nullptr) {
-            if (node->prevNode != nullptr) {
-                node->prevNode->nextNode = node->nextNode;
-                this->nodeAdjacencyList = node->nextNode;
+        if (node->adjacencyList != nullptr) {
+            AdjacencyListNode* runner = node->adjacencyList;
+
+            while (runner->next != nullptr) {
+                runner = runner->next;
             }
 
-            if (node->nextNode != nullptr) {
-                node->nextNode->prevNode = node->prevNode;
+            while (runner->prev != nullptr) {
+                runner = runner->prev;
+                removeEdge(node, runner->next->node);
             }
 
-            delete node;
-            return true;
+            removeEdge(node, runner->node);
         }
 
-        AdjacencyListNode* runner = node->adjacencyList;
+//        if (this->nodeAdjacencyList == node) {
+//            nodeAdjacencyList = node->nextNode;
+//        } else {
+//            if (node->nextNode == nullptr) {
+//                node->prevNode->nextNode = nullptr;
+//            } else {
+//                node->prevNode->nextNode = node->nextNode;
+//                node->nextNode->prevNode = node->prevNode;
+//            }
+//        }
+//
+//        delete node;
+//        return true;
 
-        while (runner->next != nullptr) {
-            runner = runner->next;
-        }
-
-        while (runner->prev != nullptr) {
-            runner = runner->prev;
-            removeEdge(node, runner->next->node);
-        }
-
-        removeEdge(node, runner->node);
-
-        if (this->nodeAdjacencyList == node) {
-            nodeAdjacencyList = node->nextNode;
+        if (node->prevNode != nullptr) {
+            node->prevNode->nextNode = node->nextNode;
         } else {
-            if (node->nextNode == nullptr) {
-                node->prevNode->nextNode = nullptr;
-            } else {
-                node->prevNode->nextNode = node->nextNode;
-                node->nextNode->prevNode = node->prevNode;
-            }
+            this->nodeAdjacencyList = node->nextNode;
+        }
+
+        if (node->nextNode != nullptr) {
+            node->nextNode->prevNode = node->prevNode;
         }
 
         delete node;
@@ -507,26 +512,31 @@ void Graph::colorizeGraph() {
 
     colorizeNodes(this->nodeAdjacencyList);
     this->colorCount = this->getColorCount();
+    GraphNode* node = getMinNodeWithColor(colorCount);
+    if (node->adjacencyList != nullptr) {
+        recolorizeNode(node);
+    }
 
 //    while (nodeAdjacencyList->getMinColor() != colorCount - 1) {
-    while (this->getColorCount() >= this->colorCount) {
-
-        GraphNode* node = getMinNodeWithColor(colorCount);
-        recolorizeNode(node);
-
-//        this->printGraph();
+//    //while (this->getColorCount() >= this->colorCount) {
 //
-//        int tempColorCount = this->getColorCount();
-//        if (tempColorCount < this->colorCount) {
-//            this->colorCount = tempColorCount;
-//        }
-    }
+//        GraphNode* node = getMinNodeWithColor(colorCount);
+//        recolorizeNode(node);
+//
+////        this->printGraph();
+////
+////        int tempColorCount = this->getColorCount();
+////        if (tempColorCount < this->colorCount) {
+////            this->colorCount = tempColorCount;
+////        }
+//    }
 
     this->colorCount = this->getColorCount();
 }
 
 void Graph::traversing() {
     if (this->nodeAdjacencyList == nullptr || this->nodeAdjacencyList->adjacencyList == nullptr) {
+        std::cout << "null";
         return;
     }
 
@@ -535,25 +545,6 @@ void Graph::traversing() {
     AdjacencyListNode* runner;
     GraphNode* edgeEnd;
     this->nodeAdjacencyList->mark = NODE_MARKED_NOT_PASSED;
-
-    /*while (queueRunner != nullptr) {
-        runner = queueRunner->node->adjacencyList;
-        while (runner != nullptr) {
-            runner->mark = EDGE_PASSED;
-            edgeEnd = runner->node;
-
-            if (edgeEnd->mark == NODE_NOT_MARKED) {
-                edgeEnd->mark = NODE_MARKED_NOT_PASSED;
-                std::cout << queueRunner->node->nodeNumber << " --- " << edgeEnd->nodeNumber << std::endl;
-                queue->addNode(edgeEnd);
-            }
-
-            runner = runner->next;
-        }
-
-        queueRunner->node->mark = NODE_PASSED;
-        queueRunner = queueRunner->nextNode;
-    }*/
 
     while (queueRunner != nullptr) {
         runner = queueRunner->node->adjacencyList;
@@ -577,26 +568,5 @@ void Graph::traversing() {
         queueRunner = queueRunner->nextNode;
     }
 
-    /*while (queueRunner != nullptr) {
-        runner = queueRunner->node->adjacencyList;
-        while (runner != nullptr) {
-            edgeEnd = runner->node;
-
-            if (edgeEnd->mark == NODE_NOT_MARKED) {
-                edgeEnd->mark = NODE_MARKED_NOT_PASSED;
-                queue->addNode(edgeEnd);
-            }
-
-            if (runner->mark == EDGE_NOT_PASSED && edgeEnd->mark != NODE_PASSED) {
-                std::cout << queueRunner->node->nodeNumber << " --- " << edgeEnd->nodeNumber << std::endl;
-            }
-
-            runner->mark = EDGE_PASSED;
-            runner = runner->next;
-        }
-
-        queueRunner->node->mark = NODE_PASSED;
-        queueRunner = queueRunner->nextNode;
-    }*/
 }
 

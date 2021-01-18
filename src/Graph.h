@@ -54,6 +54,7 @@ class Graph {
 private:
     GraphNode* nodeAdjacencyList;
     int colorCount;
+    bool colorized;
 
     int getColorCount();
     void recolorizeNode(GraphNode* node);
