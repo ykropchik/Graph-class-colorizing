@@ -228,7 +228,7 @@ void Graph::colorizeNode(GraphNode* node) {
     if (colorCount == 0) {
         node->color = node->getMinColor();
     } else {
-        if (node->getMinColor() < colorCount || !colorized) {
+        if (node->getMinColor() < colorCount || colorized) {
             node->color = node->getMinColor();
         } else {
             node->color = -1;
@@ -529,20 +529,6 @@ void Graph::colorizeGraph() {
             colorizeNodes(this->nodeAdjacencyList);
         }
     }
-
-//    while (nodeAdjacencyList->getMinColor() != colorCount - 1) {
-//    //while (this->getColorCount() >= this->colorCount) {
-//
-//        GraphNode* node = getMinNodeWithColor(colorCount);
-//        recolorizeNode(node);
-//
-////        this->printGraph();
-////
-////        int tempColorCount = this->getColorCount();
-////        if (tempColorCount < this->colorCount) {
-////            this->colorCount = tempColorCount;
-////        }
-//    }
 
     this->colorCount = this->getColorCount();
 }

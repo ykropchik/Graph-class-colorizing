@@ -76,18 +76,18 @@ int main() {
 //    std::cout << std::endl;
 
     /** ----- Третий граф ----- **/
-    Graph graph3 = Graph();
-    graph3.addEdge(1, 4);
-    graph3.addEdge(1, 5);
-    graph3.addEdge(4, 6);
-    graph3.addEdge(4, 3);
-    graph3.addEdge(5, 2);
-    graph3.addEdge(5, 6);
-    graph3.addEdge(6, 3);
-    graph3.addEdge(2, 6);
-    graph3.colorizeGraph();
-    graph3.printGraph();
-    std::cout << std::endl;
+//    Graph graph3 = Graph();
+//    graph3.addEdge(1, 4);
+//    graph3.addEdge(1, 5);
+//    graph3.addEdge(4, 6);
+//    graph3.addEdge(4, 3);
+//    graph3.addEdge(5, 2);
+//    graph3.addEdge(5, 6);
+//    graph3.addEdge(6, 3);
+//    graph3.addEdge(2, 6);
+//    graph3.colorizeGraph();
+//    graph3.printGraph();
+//    std::cout << std::endl;
 
     return 0;
 }
